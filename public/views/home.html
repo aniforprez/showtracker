@@ -1,0 +1,49 @@
+<!-- The container for querying the shows by genre or alphabet -->
+<div class="jumbotron">
+	<div class="container">
+		<!-- A list of clickable alphabets -->
+		<ul class="alphabet">
+			<li ng-repeat="char in alphabet">
+				<span ng-click="filterByAlphabet(char)"> {{char}} </span>
+			</li>
+		</ul>
+
+		<!-- A list of clickable genres -->
+		<ul class="genres">
+			<li ng-repeat="genre in genres">
+				<span ng-click="filterByGenre(genre)"> {{genre}} </span>
+			</li>
+		</ul>
+	</div>
+</div>
+
+<!-- The container which holds the list of results from above query or from the search input inside-->
+<div class="container">
+	<div class="panel panel-default">
+		<!-- The search bar for querying -->
+		<div class="panel-heading">
+			{{headingTitle}}
+			<div class="pull-right">
+				<input type="text" class="search" ng-model="query.name" placeholder="Search for a TV show" />
+			</div>
+		</div>
+
+		<!-- The panel which displays the results -->
+		<div class="panel-body">
+			<div class="row show-list">
+				<!-- The div for eah result -->
+				<div class="col-xs-4 col-md-3" ng-repeat="show in shows | filter:query | orderBy:'rating':true">
+					<!-- A link to the show with the poster -->
+					<a href="/shows/{{show._id}}">
+						<img ng-src=" {{show.poster}} " alt=" {{show.name}} " class="img-rounded" width="100%" />
+					</a>
+					<!-- A link to the show with the name -->
+					<div class="text-center">
+						<a href="/shows/{{show._id}}"> {{show.name}} </a>
+						<p class="text-muted">Episodes: {{show.episodes.length}} </p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

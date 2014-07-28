@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<!-- The app is defined in ng-app -->
+<html lang="en" ng-app="MyApp">
+<head>
+	<!-- base is required for back history -->
+	<base href="/">
+
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Showtracker</title>
+
+	<link rel="stylesheet" href="stylesheets/style.css">
+</head>
+<body>
+	<!-- Following div block is exclusively for the navbar which is implemented
+	using angularStrap instead of the standard bootstrap navbar since it supports
+	angular routes and adds an active class to links when you navigate -->
+	<div class="navbar navbar-default navbar-static-top" role="navigation" bs-navbar>
+		<div class="navbar-header">
+			<a href="/" class="navbar-brand">
+				<span class="glyphicon glyphicon-film"></span>
+				Show<strong>Tracker</strong>
+			</a>
+		</div>
+		<ul class="nav navbar-nav">
+			<li data-match-route="/$"><a href="/">Home</a></li>
+			<li data-match-route="/add"><a href="/add">Add</a></li>
+		</ul>
+		<ul class="nav navbar-nav pull-right" ng-if="!currentUser">
+			<li data-match-route="/login">
+				<a href="/login">Login</a>
+			</li>
+			<li data-match-route="/signup">
+				<a href="/signup">Sign up!</a>
+			</li>
+		</ul>
+		<ul class="nav navbar-nav pull-right" ng-if="currentUser">
+			<li class="navbar-text" ng-bind="currentUser.email"></li>
+			<li><a href="javascript:void(0)" ng-click="logout()">Logout</a></li>
+		</ul>
+	</div>
+
+	<div ng-view></div>
+
+	<!-- Vendor javascripts -->
+	<script src="vendor/angular.min.js"></script>
+	<script src="vendor/angular-strap.min.js"></script>
+	<script src="vendor/angular-strap.tpl.min.js"></script>
+	<script src="vendor/angular-cookies.min.js"></script>
+	<script src="vendor/angular-messages.min.js"></script>
+	<script src="vendor/angular-resource.min.js"></script>
+	<script src="vendor/angular-route.min.js"></script>
+	<script src="vendor/moment.min.js"></script>
+
+	<!-- Configuration file -->
+	<script src="app.js"></script>
+
+	<!-- Controllers -->
+	<script src="controllers/main.js"></script>
+
+	<!-- Services -->
+	<script src="services/show.js"></script>
+</body>
+</html>
