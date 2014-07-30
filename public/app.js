@@ -9,8 +9,6 @@ MyApp.config(['$routeProvider', '$locationProvider', function($routeProvider, $l
     // An angular service that enables html5
     $locationProvider.html5Mode(true);
 
-    console.log("Stuff and things");
-
     // Defining all routes and controllers
     $routeProvider
         .when('/', {

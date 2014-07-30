@@ -20,6 +20,7 @@ app.listen(app.get('port'), function() {
     console.log('Express server listening on port ' + app.get('port'));
 });
 
+// Mongoose schema
 var showSchema = new mongoose.Schema({
 	_id           : Number,
 	name          : String,
@@ -53,11 +54,14 @@ var userSchema = new mongoose.Schema({
 	password: String
 });
 
+// Defining the mongoose models using the schema
 var User = mongoose.model('User', userSchema);
 var Show = mongoose.model('Show', showSchema);
 
+// Initialise the mongo db with mongoose. Simple!
 mongoose.connect('localhost');
 
+// A pre-save funtion to perform certain tasks
 userSchema.pre('save', function(next) {
 	var user = this;
 	if(!user.isModified('password'))
@@ -74,6 +78,7 @@ userSchema.pre('save', function(next) {
 	});
 });
 
+// A method to compare the password to the one provided
 userSchema.methods.comparePassword = function(candidatePassword, cb) {
 	bcrypt.compare(candidatePassword, this.password, function(err, isMatch) {
 		if(err)
@@ -81,3 +86,53 @@ userSchema.methods.comparePassword = function(candidatePassword, cb) {
 		cb(null, isMatch);
 	});
 };
+
+/**
+ * The routes to be used in the app as defined on the server side
+ */
+
+// Route to get the shows based on whatever query is used
+app.get('/api/shows', function(req, res, next) {
+	var query = Show.find();
+	if(req.query.genre) {
+		query.where({ genre: req.query.genre });
+	}
+	else if(req.query.alphabet) {
+		query.where({ name: new RegExp('^' + '[' + req.query.alphabet + ']', 'i')});
+	}
+	else {
+		query.limit(12);
+	}
+	query.exec(function(err, shows) {
+		if(err)
+			return next(err);
+		res.send(shows);
+	});
+});
+
+// Route to get a single show
+app.get('/api/shows/:id', function(req, res, next) {
+	Show.findById(req.params.id, function(err, show) {
+		if(err)
+			return next(err);
+		res.send(show);
+	});
+});
+
+app.get('*', function(req, res) {
+	res.redirect('/#' + req.originalUrl);
+});
+
+// Send error message to client
+app.use(function(err, req, res, next) {
+	console.error(err.stack);
+	res.send(500, { message: err.message });
+});
+
+app.post('/api/shows', function(req, res, next) {
+	var apiKey = 'F917081C46B60FCD';
+	var parser = xml2js.parser({
+		explicitArray: false,
+		normalizeTags: true
+	});
+});
