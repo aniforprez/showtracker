@@ -1,3 +1,6 @@
+/*
+The subscriptino service to tell the server to subscribe or unsubscribe the user from the show
+ */
 angular.module('MyApp')
 	.factory('Subscription', ['$http', function($http) {
 		return {

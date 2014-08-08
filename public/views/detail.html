@@ -1,3 +1,4 @@
+<!-- The view where we display the detail of the TV show that is selected -->
 <div class="container">
 	<div class="panel panel-default">
 		<div class="panel-body">
@@ -16,26 +17,34 @@
 					</div>
 				</div>
 				<div class="media-body">
+					<!-- The heading with the name and rating of the show -->
 					<h2 class="media-heading">{{show.name}}
 						<span class="pull-right text-danger">{{show.rating}}</span>
 					</h2>
+					<!-- Displaying the airtime of the show if it's still running -->
 					<h4 ng-show="show.status === 'Continuing'">
 						<span class="glyphicon glyphicon calendar text-danger"></span>
 						{{show.airsDayOfWeek}} <em> {{show.airsTime}} </em> on {{show.network}}
 					</h4>
+					<!-- This is only displayed if the show has ended -->
 					<h4 ng-show="show.status === 'Ended'">
 						Status: <span class="text-danger">Ended</span>
 					</h4>
+					A summary of the show
 					<p>{{show.overview}}</p>
 				</div>
 			</div>
 		</div>
 	</div>
 
+	<!-- This calculates the next episode airtime and displays in an infobox IF one exists which is checked with nextEpisode filter -->
 	<div class="alert-info alert" ng-show="nextEpisode">
+		<!-- The fromNow is a filter to get the fancy date from moment.js from nextEpisode date
+		Eg. "2 days from now" -->
 		The next episode starts {{nextEpisode.firstaired | fromNow}}.
 	</div>
 
+	<!-- This displays info on all the episodes -->
 	<div class="panel panel-default">
 		<div class="panel-heading"><span class="glyphicon glyphicon-play"></span>Episodes</div>
 		<div class="panel-body">
