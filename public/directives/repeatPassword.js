@@ -7,6 +7,7 @@ angular.module('MyApp')
 				ctrl.$parsers.push(function(value) {
 					if(value === otherInput.$viewValue) {
 						ctrl.$setValidity('repeat', true);
+						return value;
 					}
 					ctrl.$setValidity('repeat', false);
 				});

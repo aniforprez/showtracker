@@ -1,28 +1,54 @@
-var express      = require('express');
-var path         = require('path');
-var favicon      = require('static-favicon');
-var logger       = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser   = require('body-parser');
-var mongoose     = require('mongoose');
-var bcrypt       = require('bcryptjs');
-var async        = require('async');
-var request      = require('request');
-var xml2js       = require('xml2js');
-var _            = require('lodash');
+// Dependency block
+var express       = require('express');
+var path          = require('path');
+var favicon       = require('static-favicon');
+var logger        = require('morgan');
+var cookieParser  = require('cookie-parser');
+var bodyParser    = require('body-parser');
+var mongoose      = require('mongoose');
+var bcrypt        = require('bcryptjs');
+var async         = require('async');
+var request       = require('request');
+var xml2js        = require('xml2js');
+var _             = require('lodash');
+var session       = require('express-session');
+var passport      = require('passport');
+var LocalStrategy = require('passport-local').Strategy;
 
+// Ooooooooh yeaaaaaaaaaaaah
 var app = express();
 
+// Middleware stuff
 app.set('port', process.env.PORT || 3000);
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
 app.use(cookieParser());
+// The session code MUST be after cookie or it won't work
+// since sessions depend on cookies
+app.use(session({
+	secret: 'keyboard cat',
+	saveUninitialized: true,
+	resave: true
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(function(req, res, next) {
+	if(req.user) {
+		res.cookie('user', JSON.stringify(req.user));
+	}
+	next();
+});
 
+// It's alive!!!!
 app.listen(app.get('port'), function() {
     console.log('Express server listening on port ' + app.get('port'));
 });
+
+/*
+This next block is for all the database stuff using mongoose
+ */
 
 // Mongoose schema
 var showSchema = new mongoose.Schema({
@@ -58,6 +84,15 @@ var userSchema = new mongoose.Schema({
 	password: String
 });
 
+// A method to compare the password to the one provided
+userSchema.methods.comparePassword = function(candidatePassword, cb) {
+	bcrypt.compare(candidatePassword, this.password, function(err, isMatch) {
+		if(err)
+			return cb(err);
+		cb(null, isMatch);
+	});
+};
+
 // Defining the mongoose models using the schema
 var User = mongoose.model('User', userSchema);
 var Show = mongoose.model('Show', showSchema);
@@ -81,15 +116,6 @@ userSchema.pre('save', function(next) {
 		});
 	});
 });
-
-// A method to compare the password to the one provided
-userSchema.methods.comparePassword = function(candidatePassword, cb) {
-	bcrypt.compare(candidatePassword, this.password, function(err, isMatch) {
-		if(err)
-			return cb(err);
-		cb(null, isMatch);
-	});
-};
 
 /**
  * The routes to be used in the app as defined on the server side
@@ -133,7 +159,7 @@ app.use(function(err, req, res, next) {
 	res.send(500, { message: err.message });
 });
 
-// The post function to get the show details from theTVDB
+// The route to get the show details from theTVDB
 app.post('/api/shows', function(req, res, next) {
 	// you need to get this apikey from theTVDB by creating an account
 	var apiKey = 'F917081C46B60FCD';
@@ -232,3 +258,71 @@ app.post('/api/shows', function(req, res, next) {
 		});
 	});
 });
+
+// The route to tell client user is VALID
+app.post('/api/login', passport.authenticate('local'), function(req, res) {
+	res.cookie('user', JSON.stringify(req.user));
+	res.send(req.user);
+});
+
+// The route to SIGN UP the user with data from the client
+app.post('/api/signup', function(req, res, next) {
+	var user = new User({
+		email   : req.body.email,
+		password: req.body.password
+	});
+	console.log(user.password);
+	user.save(function(err) {
+		if(err)
+			return next(err);
+		res.send(200);
+	})
+})
+
+// The route to tell the client is LOGGED OUT
+app.get('/api/logout', function(req, res, next) {
+	req.logout();
+	res.send(200);
+})
+
+/*
+This next block is for authorisation using passport
+ */
+
+// serialise and deserialise functions keep the user signed in
+passport.serializeUser(function(user, done) {
+	done(null, user.id);
+});
+
+passport.deserializeUser(function(id, done) {
+	User.findById(id, function(err, user) {
+		done(err, user);
+	});
+});
+
+// Instead of using FB or Google sign-in,
+// local username and pw strategy is used
+// and this function checks the given un and  pw
+// and signs in
+passport.use(new LocalStrategy({ usernameField: 'email' }, function(email, password, done) {
+	User.findOne({ email: email }, function(err, user) {
+		if(err)
+			return done(err);
+		if(!user)
+			return done(null, false);
+		user.comparePassword(password, function(err, isMatch) {
+			if(err)
+				return done(err);
+			if(isMatch)
+				return done(null, user);
+			return done(null, false);
+		});
+	});
+}));
+
+function ensureAuthenticated(req, res, next) {
+	if(req.isAuthenticated())
+		next();
+	else
+		res.send(401);
+}

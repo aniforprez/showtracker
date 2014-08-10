@@ -3,7 +3,7 @@ angular.module('MyApp')
 		$scope.signup = function() {
 			Auth.signup({
 				email   : $scope.email,
-				password: $scope.passord
+				password: $scope.password
 			});
 		};
 	}]);
