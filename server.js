@@ -1,15 +1,15 @@
-var express = require('express');
-var path = require('path');
-var favicon = require('static-favicon');
-var logger = require('morgan');
+var express      = require('express');
+var path         = require('path');
+var favicon      = require('static-favicon');
+var logger       = require('morgan');
 var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
-var mongoose = require('mongoose');
-var bcrypt = require('bcryptjs');
-var async = require('async');
-var request = require('request');
-var xml2js = require('xml2js');
-var _ = require('lodash');
+var bodyParser   = require('body-parser');
+var mongoose     = require('mongoose');
+var bcrypt       = require('bcryptjs');
+var async        = require('async');
+var request      = require('request');
+var xml2js       = require('xml2js');
+var _            = require('lodash');
 
 var app = express();
 
@@ -42,7 +42,7 @@ var showSchema = new mongoose.Schema({
 		type: mongoose.Schema.Types.ObjectId,
 		ref : 'User'
 	}],
-	episodes      : [{
+	episodes: [{
 		season       : Number,
 		episodeNumber: Number,
 		episodeName  : String,
@@ -51,7 +51,7 @@ var showSchema = new mongoose.Schema({
 	}]
 });
 var userSchema = new mongoose.Schema({
-	email   : {
+	email: {
 		type  : String,
 		unique: true
 	},
@@ -175,33 +175,33 @@ app.post('/api/shows', function(req, res, next) {
 					return next(error);
 				// parses the xml returned to create json data of the show
 				parser.parseString(body, function(err, result) {
-					var series = result.data.series;
+					var series   = result.data.series;
 					var episodes = result.data.episode;
-					var show = new Show({
-						_id: series.id,
-						name: series.seriesname,
+					var show     = new Show({
+						_id          : series.id,
+						name         : series.seriesname,
 						airsDayOfWeek: series.airs_dayofweek,
-						airsTime: series.airs_time,
-						firstAired: series.firstaired,
-						genre: series.genre.split('|').filter(Boolean),
-						network: series.network,
-						overview: series.overview,
-						rating: series.rating,
-						ratingCount: series.ratingcount,
-						runtime: series.runtime,
-						status: series.status,
-						poster: series.poster,
-						episodes: []
+						airsTime     : series.airs_time,
+						firstAired   : series.firstaired,
+						genre        : series.genre.split('|').filter(Boolean),
+						network      : series.network,
+						overview     : series.overview,
+						rating       : series.rating,
+						ratingCount  : series.ratingcount,
+						runtime      : series.runtime,
+						status       : series.status,
+						poster       : series.poster,
+						episodes     : []
 					});
 					// '_' replaces the for loop completely. the first argument in an _ function should be the array and then
 					// a function to perform the required ... function. AWESOME! supported by the lodash library
 					_.each(episodes, function(episode) {
 						show.episodes.push({
-							season: episode.seasonnumber,
+							season       : episode.seasonnumber,
 							episodeNumber: episode.episodenumber,
-							episodeName: episode.episodename,
-							firstAired: episode.firstaired,
-							overview: episode.overview
+							episodeName  : episode.episodename,
+							firstAired   : episode.firstaired,
+							overview     : episode.overview
 						});
 					});
 					// send the showdata generated to the next waterfall function

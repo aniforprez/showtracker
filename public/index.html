@@ -17,7 +17,7 @@
 	<!-- Following div block is exclusively for the navbar which is implemented
 	using angularStrap instead of the standard bootstrap navbar since it supports
 	angular routes and adds an active class to links when you navigate -->
-	<div class="navbar navbar-default navbar-static-top" role="navigation" bs-navbar>
+	<div ng-controller="NavbarCtrl" class="navbar navbar-default navbar-static-top" role="navigation" bs-navbar>
 		<div class="navbar-header">
 			<a href="/" class="navbar-brand">
 				<span class="glyphicon glyphicon-film"></span>
@@ -61,12 +61,19 @@
 	<script src="controllers/main.js"></script>
 	<script src="controllers/add.js"></script>
 	<script src="controllers/detail.js"></script>
+	<script src="controllers/login.js"></script>
+	<script src="controllers/signup.js"></script>
+	<script src="controllers/navbar.js"></script>
 
 	<!-- Services -->
 	<script src="services/show.js"></script>
 	<script src="services/subscription.js"></script>
+	<script src="services/auth.js"></script>
 
 	<!-- Filters -->
 	<script src="filters/fromNow.js"></script>
+
+	<!-- Directives -->
+	<script src="directives/repeatPassword.js"></script>
 </body>
 </html>
