@@ -5,11 +5,11 @@
 			<form class="form" method="post" ng-submit="addShow()" name="addForm">
 				<div class="form-group" ng-class="{ 'has-success': addForm.showName.$valid && addForm.showName.$dirty, 'has-error': addForm.showName.$invalid && addForm.showName.$dirty }">
 					<input type="text" class="form-control" name="showName" ng-model="showName" placeholder="Enter TV show name" required autofocus />
-					<div class="help-block text-danger" ng-if="addForm.showName.1dirty" ng-messages="addform.showName.1error">
+					<div class="help-block text-danger" ng-if="addForm.showName.$dirty" ng-messages="addform.showName.$error">
 						<div ng-message="required">TV show name is required</div>
 					</div>
 				</div>
-				<button class="btn btn-primary" ng-disabled="addform.1invalid">Add</button>
+				<button class="btn btn-primary" ng-disabled="addform.$invalid">Add</button>
 			</form>
 		</div>
 	</div>

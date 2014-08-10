@@ -4,14 +4,22 @@
 		<div class="panel-body">
 			<div class="media">
 				<div class="pull-left">
-					<img class="media-object img-rounded" ng-src=" {{show.poster}} ">
+					<img class="media-object img-rounded" ng-src="{{show.poster}}">
 					<div class="text-center" ng-if="currentUser">
+						<!-- This only displays if the user is NOT already subscribed to updates -->
 						<div ng-show="!isSubscribed()">
-							<button class="btn btn-blobk btn-success" ng-click="subscribe()">
+							<button class="btn btn-block btn-success" ng-click="subscribe()">
 								<span class="glyphicon glyphicon-plus"></span>Subscribe
 							</button>
 						</div>
+						<!-- Thsi only displays if user si already subscribed -->
+						<div ng-show="isSubscribed()">
+							<button class="btn btn-block btn-danger" ng-click="unsubscribe()">
+								<span class="glyphicon glyphicon-minus"></span>Unsubscribe
+							</button>
+						</div>
 					</div>
+					<!-- Only displays if no user is currently logged in -->
 					<div class="text-center" ng-show="!currentUser">
 						<a href="#/login" class="btn btn-block btn-primary">Login to Subscribe</a>
 					</div>

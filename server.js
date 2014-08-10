@@ -7,7 +7,7 @@ var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var bcrypt = require('bcryptjs');
 var async = require('async');
-var request = request('request');
+var request = require('request');
 var xml2js = require('xml2js');
 var _ = require('lodash');
 
@@ -138,7 +138,7 @@ app.post('/api/shows', function(req, res, next) {
 	// you need to get this apikey from theTVDB by creating an account
 	var apiKey = 'F917081C46B60FCD';
 	// The xml parser
-	var parser = xml2js.parser({
+	var parser = xml2js.Parser({
 		explicitArray: false,
 		normalizeTags: true
 	});
@@ -155,7 +155,7 @@ app.post('/api/shows', function(req, res, next) {
 
 		// This first function which searches for series with the search terms and assigns to seriesId variable
 		function(callback) {
-			request.get('http://thetvdb.com/api/GetSeries.php?seriesname=' + seriesName, function(err, response, body) {
+			request.get('http://thetvdb.com/api/GetSeries.php?seriesname=' + seriesName, function(error, response, body) {
 				if(error)
 					return next(error);
 				parser.parseString(body, function(err, result) {
@@ -213,7 +213,7 @@ app.post('/api/shows', function(req, res, next) {
 		function(show, callback) {
 			var url = 'http://thetvdb.com/banners/' + show.poster;
 			request({ url: url, encoding: null }, function(error, response, body) {
-				show.poster = 'data:' + response.headers['content-type'] + ';base64' + body.toString('base64');
+				show.poster = 'data:' + response.headers['content-type'] + ';base64,' + body.toString('base64');
 				callback(error, show);
 			});
 		}

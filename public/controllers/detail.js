@@ -3,7 +3,7 @@ The controller for the details view where we perform user subscription functinos
 and also get the next episode to air if there is one to display
  */
 angular.module('MyApp')
-	.controller('DetailCtrl', ['$scope', '$rootScope', '$routeParams', 'Show', 'subscription', function($scope, $rootScope, $routeParams, Show, subscription){
+	.controller('DetailCtrl', ['$scope', '$rootScope', '$routeParams', 'Show', 'Subscription', function($scope, $rootScope, $routeParams, Show, Subscription){
 		Show.get({ _id: $routeParams.id }, function(show) {
 			$scope.show = show;
 
