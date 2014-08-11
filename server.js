@@ -14,15 +14,17 @@ var _             = require('lodash');
 var session       = require('express-session');
 var passport      = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
-var agenda = require('agenda')({ db: { address: 'localhost:27017/test' } });
-var sugar = require('sugar');
-var nodemailer = require('nodemailer');
+var agenda        = require('agenda')({ db: { address: 'localhost:27017/test' } });
+var sugar         = require('sugar');
+var nodemailer    = require('nodemailer');
+var compress      = require('compression');
 
 // Ooooooooh yeaaaaaaaaaaaah
 var app = express();
 
 // Middleware stuff
 app.set('port', process.env.PORT || 3000);
+app.use(compress());
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
@@ -36,7 +38,9 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(express.static(path.join(__dirname, 'public')));
+
+var oneWeek = 7 * 24 * 60 * 60 * 1000;
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: oneWeek }));
 app.use(function(req, res, next) {
 	if(req.user) {
 		res.cookie('user', JSON.stringify(req.user));
