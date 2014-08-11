@@ -14,6 +14,9 @@ var _             = require('lodash');
 var session       = require('express-session');
 var passport      = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
+var agenda = require('agenda')({ db: { address: 'localhost:27017/test' } });
+var sugar = require('sugar');
+var nodemailer = require('nodemailer');
 
 // Ooooooooh yeaaaaaaaaaaaah
 var app = express();
@@ -178,7 +181,6 @@ app.post('/api/shows', function(req, res, next) {
 
 	// This is used to initiate each function in it's array one after another (hence 'waterfall')
 	async.waterfall([
-
 		// This first function which searches for series with the search terms and assigns to seriesId variable
 		function(callback) {
 			request.get('http://thetvdb.com/api/GetSeries.php?seriesname=' + seriesName, function(error, response, body) {
@@ -244,7 +246,7 @@ app.post('/api/shows', function(req, res, next) {
 			});
 		}
 	], function(err, show) {
-		// this function handles the errors coming out of the waterfall
+		// this function runs at the end of the waterfall with show as the result
 		if(err)
 			return next(err);
 		show.save(function(err) {
@@ -255,11 +257,25 @@ app.post('/api/shows', function(req, res, next) {
 				return next(err);
 			}
 			res.send(200);
+
+			// This creates the agenda job which runs every week 2 hours before the airtime
+			// This I feel is HIGHLY inefficient since it runs even if the show is cancelled
+			// @TODO find a better way than THIS for alerting the user
+			//
+			// The awesome Date.create function is provided by sugar.js
+			// OK I kinda made a hack by checking the status but it's still not to my liking
+			// since it won't check later
+			if(show.status === 'Continuing') {
+				var alertDate = Date.create('Next ' + show.airsDayOfWeek + ' at ' + show.airsTime).rewind({ hour: 2 });
+				agenda.schedule(alertDate, 'send email alert', show.name).repeatEvery('1 week');
+			}
 		});
 	});
 });
 
 // The route to tell client user is VALID
+// Kinda unsafe since we're sending pw data across the net
+// @TODO find a better login solution
 app.post('/api/login', passport.authenticate('local'), function(req, res) {
 	res.cookie('user', JSON.stringify(req.user));
 	res.send(req.user);
@@ -276,14 +292,43 @@ app.post('/api/signup', function(req, res, next) {
 		if(err)
 			return next(err);
 		res.send(200);
-	})
-})
+	});
+});
 
 // The route to tell the client is LOGGED OUT
 app.get('/api/logout', function(req, res, next) {
 	req.logout();
 	res.send(200);
-})
+});
+
+// The route to subscribe to a show
+app.post('/api/subscribe', ensureAuthenticated, function(req, res, next) {
+	Show.findById(req.body.showId, function(err, show) {
+		if(err)
+			return next(err);
+		show.subscribers.push(req.user.id);
+		show.save(function(err) {
+			if(err)
+				return next(err);
+			res.send(200);
+		});
+	});
+});
+
+// The route to unsubscribe to a show
+app.post('/api/unsubscribe', ensureAuthenticated, function(req, res, next) {
+	Show.findById(req.body.showId, function(err, show) {
+		if(err)
+			return next(err);
+		var index = show.subscribers.indexOf(req.user.id);
+		show.subscribers.splice(index, 1);
+		show.save(function(err) {
+			if(err)
+				return next(err);
+			res.send(200);
+		});
+	});
+});
 
 /*
 This next block is for authorisation using passport
@@ -300,10 +345,8 @@ passport.deserializeUser(function(id, done) {
 	});
 });
 
-// Instead of using FB or Google sign-in,
-// local username and pw strategy is used
-// and this function checks the given un and  pw
-// and signs in
+// Instead of using FB or Google sign-in, local username and pw strategy is used
+// and this function checks the given un and pw and signs in
 passport.use(new LocalStrategy({ usernameField: 'email' }, function(email, password, done) {
 	User.findOne({ email: email }, function(err, user) {
 		if(err)
@@ -326,3 +369,63 @@ function ensureAuthenticated(req, res, next) {
 	else
 		res.send(401);
 }
+
+/*
+The agenda task which sends a mail to the user alerting them to the next episode of the subscribed shows
+ */
+agenda.define('send email alert', function(job, done) {
+	Show.findOne({ name: job.attrs.data })
+		// populate is a mongoose function to get all data matching the attribute passed
+		// here we get the subscribers array which is then passed to the exec function to do whatevs
+		.populate('subscribers')
+		.exec(function(err, show) {
+			if(err)
+				return next(err);
+			var emails = show.subscribers.map(function(user) {
+				return user.email;
+			});
+
+			var upcomingEpisode = show.episodes.filter(function(episode) {
+				var lastEp = new Date(episode.firstAired);
+				return new Date(episode.firstAired) > new Date();
+			})[0];
+
+			// checking if another episode even exists. this is hacky as fuck but for now it'll do
+			// it comes out of the function if it doesn't
+			if(!upcomingEpisode) {
+				return;
+			}
+
+			var smtpTransport = nodemailer.createTransport('SMTP', {
+				service: 'SendGrid',
+				auth: { user: 'hslogin', pass: 'hspassword00' }
+			});
+
+			var mailOptions = {
+				from: 'Showtracker <showtracker@something.com>',
+				to: emails.join(','),
+				subject: show.name + ' will start soon',
+				text: show.name + ' starts in less than 2 hours on ' + show.network +
+					'.\n\n' + 'Episode ' + upcomingEpisode.episodeNumber + ' Overview\n\n' +
+					upcomingEpisode.overview
+			};
+
+			smtpTransport.sendMail(mailOptions, function(error, response) {
+				smtpTransport.close();
+				done();
+			});
+		});
+});
+
+// Start the mailing job
+agenda.start();
+
+// what to do when the job starts
+agenda.on('start', function(job) {
+	console.log("Agenda job has started");
+});
+
+// what to do when the job is done
+agenda.on('complete', function(job) {
+	console.log("Agendajob is done");
+});
